@@ -1,0 +1,29 @@
+# Virtual environments & caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets & local environment files (NEVER commit secrets!)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*credentials*.json
+
+# Local persistent session databases & runtime artifacts
+*.db
+*.sqlite
+*.sqlite3
+.adk/
+logs/
+
+# Terraform state & provider binaries
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars

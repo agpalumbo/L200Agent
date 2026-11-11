@@ -1,0 +1,65 @@
+name: AgentOps CI & Golden Evaluation
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test-and-eval:
+    name: Lint, Unit/Integration Suite & Golden Eval Harness
+    runs-on: ubuntu-latest
+    env:
+      COMMERCE_MODE: fixture
+      ENABLE_SECRET_MANAGER: "false"
+      ENABLE_CLOUD_DLP: "false"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run Ruff static linter
+        run: ruff check commerce_ops_agent tests
+
+      - name: Run unit & multi-agent integration tests
+        run: pytest tests/unit tests/integration -v
+
+      - name: Run golden dataset regression evaluation suite
+        run: pytest tests/eval -v
+
+  terraform-validate:
+    name: Terraform IaC Format & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.5"
+
+      - name: Terraform Format Check
+        working-directory: terraform
+        run: terraform fmt -check
+
+      - name: Terraform Init (backend=false) & Validate
+        working-directory: terraform
+        run: |
+          terraform init -backend=false
+          terraform validate
