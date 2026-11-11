@@ -28,9 +28,12 @@ class CloudflareEdgeAdapter:
             "User-Agent": "AlottaCake-CommerceOpsAgent/1.0 (+https://alottacake.com)",
             "Accept": "text/html,application/xhtml+xml",
         }
-        async with httpx.AsyncClient(timeout=12.0, follow_redirects=True, headers=headers) as client:
+        allowed_host = httpx.URL(self.settings.cloudflare_storefront_base_url).host
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=False, headers=headers) as client:
             for route in routes:
                 url = f"{self.settings.cloudflare_storefront_base_url}{route}"
+                if httpx.URL(url).host != allowed_host:
+                    raise ValueError(f"Blocked cross-origin route inspection: {route}")
                 started = time.perf_counter()
                 resp = await client.get(url)
                 elapsed_ms = round((time.perf_counter() - started) * 1000.0, 2)
@@ -63,7 +66,7 @@ class CloudflareEdgeAdapter:
         """Fetches `/products/<handle>` on `alottacake.com` to read rendered price."""
         url = f"{self.settings.cloudflare_storefront_base_url}/products/{handle}"
         headers = {"User-Agent": "AlottaCake-CommerceOpsAgent/1.0"}
-        async with httpx.AsyncClient(timeout=12.0, follow_redirects=True, headers=headers) as client:
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=False, headers=headers) as client:
             resp = await client.get(url)
             if resp.status_code != 200:
                 return {"edge_visible": False, "edge_rendered_price_cents": 0}

@@ -1,7 +1,6 @@
 variable "project_id" {
   description = "Isolated Google Cloud Project ID hosting the ADK agent, Secret Manager, and Cloud DLP."
   type        = string
-  default     = "l200-agpalumbo-et3xgz"
 }
 
 variable "region" {
@@ -19,7 +18,7 @@ variable "service_name" {
 variable "container_image" {
   description = "Container image URI built for the ADK API server."
   type        = string
-  default     = "us-central1-docker.pkg.dev/l200-agpalumbo-et3xgz/alottacake-commerce-ops-images/agent:latest"
+  default     = "us-central1-docker.pkg.dev/example-project/alottacake-commerce-ops-images/agent:latest"
 }
 
 variable "commerce_mode" {
@@ -31,11 +30,11 @@ variable "commerce_mode" {
 variable "shopify_shop_domain" {
   description = "Target Shopify store domain."
   type        = string
-  default     = "m7m2bn-sv.myshopify.com"
+  default     = "example-store.myshopify.com"
 }
 
 variable "cloudflare_zone_id" {
-  description = "Cloudflare Zone ID for alottacake.com."
+  description = "Cloudflare Zone ID for the storefront domain."
   type        = string
-  default     = "098b4805a1195d34a58b8320e76872eb"
+  default     = "00000000000000000000000000000000"
 }

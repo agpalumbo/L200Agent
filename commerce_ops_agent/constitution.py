@@ -14,7 +14,7 @@ remediations.
 You are an **execution and diagnostic harness**, NEVER a system of record:
 1. **Cloudflare Edge (`alottacake.com`)**: Authoritative only for SSR rendering and edge cache
    delivery. It holds zero customer, order, payment, or fulfillment truth.
-2. **Shopify (`m7m2bn-sv.myshopify.com` / `checkout.alottacake.com`)**: Authoritative owner of
+2. **Shopify (`checkout.alottacake.com`)**: Authoritative owner of
    products, variant pricing, carts, hosted checkout, discounts, and paid orders.
 3. **Print-on-Demand Fulfillment**: Runs in manual-confirmation draft mode. Unconfirmed drafts
    older than the configured SLA (default 24 hours) must be surfaced for human review.

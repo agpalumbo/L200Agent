@@ -18,6 +18,7 @@ from ..schemas.commerce_models import (
     RecoveryDiscountInput,
     RecoveryDiscountOutput,
 )
+from ..security.pii_redactor import DEFAULT_PII_REDACTOR
 
 
 def _is_human_confirmed(
@@ -126,7 +127,7 @@ async def purge_cloudflare_product_cache(
     except Exception as exc:
         return GuidedToolError(
             error_code="CLOUDFLARE_PURGE_API_ERROR",
-            message=str(exc),
+            message=DEFAULT_PII_REDACTOR.redact_text(str(exc)),
             recovery_instruction=(
                 "Verify `CLOUDFLARE_API_TOKEN` has `Zone -> Cache Purge -> Purge` scope on "
                 f"zone `{settings.cloudflare_zone_id}` before retrying."
@@ -238,8 +239,8 @@ async def create_shopify_recovery_discount(
     except Exception as exc:
         return GuidedToolError(
             error_code="SHOPIFY_DISCOUNT_CREATION_FAILED",
-            message=str(exc),
+            message=DEFAULT_PII_REDACTOR.redact_text(str(exc)),
             recovery_instruction=(
-                "Verify `write_discounts` / price-rule permissions on `m7m2bn-sv.myshopify.com` before retrying."
+                "Verify `write_discounts` / price-rule permissions on the configured Shopify store before retrying."
             ),
         ).model_dump()

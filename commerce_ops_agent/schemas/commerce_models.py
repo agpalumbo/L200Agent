@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import re
 from typing import Literal
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+_SAFE_ROUTE_RE = re.compile(r"^/(?:[A-Za-z0-9_-]+(?:/[A-Za-z0-9_-]+)*)?$")
+_SAFE_HANDLE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,80}$")
+_SAFE_PRODUCT_PATH_RE = re.compile(r"^/products/[a-z0-9][a-z0-9-]{0,80}$")
 
 
 class StrictSchema(BaseModel):
@@ -56,8 +62,10 @@ class EdgeInspectionInput(StrictSchema):
         cleaned: list[str] = []
         for route in value:
             r = route.strip()
-            if not r.startswith("/"):
-                raise ValueError(f"Route '{r}' must start with '/'.")
+            if not r.startswith("/") or r.startswith("//") or ".." in r or not _SAFE_ROUTE_RE.match(r):
+                raise ValueError(
+                    f"Route '{r}' must be a clean relative path starting with '/' without '..' or query params."
+                )
             cleaned.append(r)
         return cleaned
 
@@ -99,6 +107,17 @@ class CatalogParityInput(StrictSchema):
         max_length=25,
         description="Product URL handles to cross-check between Shopify and Cloudflare edge.",
     )
+
+    @field_validator("product_handles")
+    @classmethod
+    def _validate_handles(cls, value: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        for handle in value:
+            h = handle.strip()
+            if not _SAFE_HANDLE_RE.match(h):
+                raise ValueError(f"Invalid product handle '{h}': must match lowercase slug `[a-z0-9-]+`.")
+            cleaned.append(h)
+        return cleaned
 
 
 class ProductParityItem(StrictSchema):
@@ -239,6 +258,28 @@ class CachePurgeInput(StrictSchema):
         default=False,
         description="Must be True ONLY after explicit human operator approval.",
     )
+
+    @field_validator("product_urls")
+    @classmethod
+    def _validate_purge_urls(cls, value: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        for raw_url in value:
+            u = raw_url.strip()
+            parsed = urlparse(u)
+            if (
+                parsed.scheme != "https"
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.query
+                or parsed.fragment
+                or ".." in parsed.path
+                or not _SAFE_PRODUCT_PATH_RE.match(parsed.path)
+            ):
+                raise ValueError(
+                    f"URL '{u}' must be a clean https://<host>/products/<handle> URL without '..' or query params."
+                )
+            cleaned.append(u)
+        return cleaned
 
 
 class CachePurgeOutput(StrictSchema):

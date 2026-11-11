@@ -60,6 +60,8 @@ jobs:
 
       - name: Terraform Init (backend=false) & Validate
         working-directory: terraform
+        env:
+          TF_VAR_project_id: "ci-validation-project"
         run: |
           terraform init -backend=false
           terraform validate

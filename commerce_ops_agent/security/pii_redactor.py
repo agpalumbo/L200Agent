@@ -21,6 +21,11 @@ from ..observability.telemetry import traced_operation
 _EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 _PHONE_RE = re.compile(r"(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b")
 _CARD_RE = re.compile(r"\b(?:\d[ -]*?){13,19}\b")
+_SECRET_TOKEN_RE = re.compile(
+    r"(?:\b(?:cfut|shpat|shpss|gho|ghp)_[A-Za-z0-9_-]{8,}\b"
+    r"|\bAIza[0-9A-Za-z_-]{20,}\b"
+    r"|Bearer\s+[A-Za-z0-9._-]{12,})"
+)
 _SHOPIFY_GID_RE = re.compile(r"gid://shopify/(?:Order|Customer|FulfillmentOrder)/(\d+)")
 _STREET_RE = re.compile(
     r"\b\d{1,6}\s+[A-Za-z0-9.\s]{2,35}\s+"
@@ -110,6 +115,7 @@ class PiiRedactor:
         if not text:
             return text
         scrubbed = self._scrub_via_cloud_dlp(text)
+        scrubbed = _SECRET_TOKEN_RE.sub("[REDACTED_SECRET]", scrubbed)
         scrubbed = _EMAIL_RE.sub("[REDACTED_EMAIL]", scrubbed)
         scrubbed = _PHONE_RE.sub("[REDACTED_PHONE]", scrubbed)
         scrubbed = _CARD_RE.sub("[REDACTED_CARD]", scrubbed)

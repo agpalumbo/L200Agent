@@ -57,7 +57,7 @@ async def test_persistent_database_session_service(tmp_path: Path) -> None:
     created = await service.create_session(
         app_name="commerce_ops_agent",
         user_id="operator_alejandro",
-        state={"last_checked_shop": "m7m2bn-sv.myshopify.com"},
+        state={"last_checked_shop": "example-store.myshopify.com"},
     )
     loaded = await service.get_session(
         app_name="commerce_ops_agent",
@@ -65,7 +65,7 @@ async def test_persistent_database_session_service(tmp_path: Path) -> None:
         session_id=created.id,
     )
     assert loaded is not None
-    assert loaded.state["last_checked_shop"] == "m7m2bn-sv.myshopify.com"
+    assert loaded.state["last_checked_shop"] == "example-store.myshopify.com"
     if hasattr(service, "close"):
         await service.close()
     elif getattr(service, "db_engine", None) is not None:

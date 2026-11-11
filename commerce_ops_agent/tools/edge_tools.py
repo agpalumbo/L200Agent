@@ -19,6 +19,7 @@ from ..schemas.commerce_models import (
     ProductParityItem,
     RouteHealthRecord,
 )
+from ..security.pii_redactor import DEFAULT_PII_REDACTOR
 
 
 @traced_operation("tool.inspect_cloudflare_edge_routes")
@@ -92,7 +93,7 @@ async def inspect_cloudflare_edge_routes(
     except Exception as exc:
         return GuidedToolError(
             error_code="CLOUDFLARE_INSPECTION_UNAVAILABLE",
-            message=str(exc),
+            message=DEFAULT_PII_REDACTOR.redact_text(str(exc)),
             recovery_instruction=(
                 "Verify `CLOUDFLARE_STOREFRONT_BASE_URL` connectivity or continue the "
                 "Shopify catalog check independently via `verify_shopify_storefront_catalog_parity`."
@@ -107,7 +108,7 @@ async def verify_shopify_storefront_catalog_parity(
     """Compares authoritative Shopify product prices and status against Cloudflare SSR output.
 
     Detects price mismatches (in integer USD cents) or visibility drift between
-    Shopify (`m7m2bn-sv.myshopify.com`) and the edge-cached storefront (`alottacake.com`).
+    Shopify and the edge-cached storefront (`alottacake.com`).
 
     Args:
         product_handles: Optional list of Shopify product URL handles to verify
@@ -183,7 +184,7 @@ async def verify_shopify_storefront_catalog_parity(
     except Exception as exc:
         return GuidedToolError(
             error_code="CATALOG_PARITY_CHECK_FAILED",
-            message=str(exc),
+            message=DEFAULT_PII_REDACTOR.redact_text(str(exc)),
             recovery_instruction=(
                 "Confirm Shopify `read_products` scope is active on the configured "
                 "Dev Dashboard credentials, or retry with a smaller `product_handles` subset."

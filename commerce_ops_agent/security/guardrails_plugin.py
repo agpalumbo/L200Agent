@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 from urllib.parse import urlparse
@@ -24,6 +25,8 @@ from ..observability.structured_logger import (
 from .pii_redactor import DEFAULT_PII_REDACTOR
 
 logger = get_structured_logger(__name__)
+
+_SAFE_PRODUCT_PATH_RE = re.compile(r"^/products/[a-z0-9][a-z0-9-]{0,80}$")
 
 _BLOCKED_INJECTION_PATTERNS = (
     "ignore all previous instructions",
@@ -146,11 +149,16 @@ class CommerceGovernancePlugin(BasePlugin):
         if tool.name == "purge_cloudflare_product_cache":
             allowed_host = urlparse(settings.cloudflare_storefront_base_url).netloc
             for raw_url in tool_args.get("product_urls", []):
-                parsed = urlparse(str(raw_url))
+                parsed = urlparse(str(raw_url).strip())
                 if (
                     parsed.scheme != "https"
                     or parsed.netloc != allowed_host
-                    or not parsed.path.startswith("/products/")
+                    or parsed.username is not None
+                    or parsed.password is not None
+                    or parsed.query
+                    or parsed.fragment
+                    or ".." in parsed.path
+                    or not _SAFE_PRODUCT_PATH_RE.match(parsed.path)
                 ):
                     return {
                         "status": "error",

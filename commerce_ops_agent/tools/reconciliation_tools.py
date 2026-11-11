@@ -97,7 +97,7 @@ async def fetch_redacted_shopify_orders(
             message=DEFAULT_PII_REDACTOR.redact_text(str(exc)),
             recovery_instruction=(
                 "Verify that the Shopify Dev Dashboard app has `read_orders` scope installed "
-                "on `m7m2bn-sv.myshopify.com`, or narrow `lookback_hours` to 24."
+                "on the configured Shopify store, or narrow `lookback_hours` to 24."
             ),
         ).model_dump()
 

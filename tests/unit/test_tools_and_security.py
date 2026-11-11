@@ -157,3 +157,30 @@ def test_intent_and_outcome_audit_logging() -> None:
     assert len(events) == 2
     assert events[0]["audit_phase"] == "TOOL_INTENT"
     assert events[1]["audit_phase"] == "TOOL_OUTCOME"
+
+
+@pytest.mark.asyncio
+async def test_ssrf_path_traversal_and_secret_token_scrubbing() -> None:
+    # Block path traversal and protocol-relative routes
+    traversal = await inspect_cloudflare_edge_routes(routes=["/products/../../admin"])
+    assert traversal["status"] == "error"
+    proto_rel = await inspect_cloudflare_edge_routes(routes=["//evil.example.com/steal"])
+    assert proto_rel["status"] == "error"
+
+    # Block handle path traversal
+    bad_handle = await verify_shopify_storefront_catalog_parity(product_handles=["../secret"])
+    assert bad_handle["status"] == "error"
+
+    # Block purge path traversal bypass
+    bad_purge = await purge_cloudflare_product_cache(
+        product_urls=["https://alottacake.com/products/../"],
+        reason="Traversal attempt",
+        operator_confirmed=True,
+    )
+    assert bad_purge["status"] == "error"
+
+    # Scrub credential tokens from error strings
+    leaked = DEFAULT_PII_REDACTOR.redact_text("Auth failed for Bearer cfut_1234567890abcdef and shpss_abcdef1234567890")
+    assert "cfut_" not in leaked
+    assert "shpss_" not in leaked
+    assert "[REDACTED_SECRET]" in leaked

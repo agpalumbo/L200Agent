@@ -8,6 +8,7 @@ cross-session retrieval of past storefront drift and fulfillment SLA events.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -58,6 +59,8 @@ class PersistentIncidentMemoryStore:
                 """
             )
             conn.commit()
+        if self.sqlite_path.exists():
+            os.chmod(self.sqlite_path, 0o600)
 
     @traced_operation("memory.store_incident")
     def save_incident(self, record: IncidentMemoryRecord) -> int:
@@ -85,6 +88,8 @@ class PersistentIncidentMemoryStore:
                 ),
             )
             conn.commit()
+        if self.sqlite_path.exists():
+            os.chmod(self.sqlite_path, 0o600)
             return int(cur.lastrowid or 0)
 
     @traced_operation("memory.search_incidents")

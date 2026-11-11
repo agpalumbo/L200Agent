@@ -2,7 +2,7 @@
 
 [![AgentOps CI & Golden Evaluation](https://github.com/agpalumbo/L200Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/agpalumbo/L200Agent/actions/workflows/ci.yml)
 
-A bounded, multi-agent **Google Agent Development Kit (`google-adk`)** system built for **Alotta Cake** (`https://alottacake.com`). It continuously reconciles headless **Cloudflare Workers** storefront state against **Shopify** (`m7m2bn-sv.myshopify.com` / `checkout.alottacake.com`) and Print-on-Demand fulfillment SLAs—while enforcing active **PII redaction**, **HMAC order pseudonymization**, **minor-unit integer margin math**, and **Human-in-the-Loop (HITL)** approval stops before any edge cache purge or customer recovery discount mutation.
+A bounded, multi-agent **Google Agent Development Kit (`google-adk`)** system built for **Alotta Cake** (`https://alottacake.com`). It continuously reconciles headless **Cloudflare Workers** storefront state against **Shopify** (`checkout.alottacake.com`) and Print-on-Demand fulfillment SLAs—while enforcing active **PII redaction**, **HMAC order pseudonymization**, **minor-unit integer margin math**, and **Human-in-the-Loop (HITL)** approval stops before any edge cache purge or customer recovery discount mutation.
 
 ---
 
@@ -91,12 +91,12 @@ adk run commerce_ops_agent
 # Provision Secret Manager, Artifact Registry, least-privilege IAM, and Cloud Run
 cd terraform
 terraform init
-terraform plan -var="project_id=l200-agpalumbo-et3xgz"
-terraform apply -var="project_id=l200-agpalumbo-et3xgz"
+terraform plan -var="project_id=your-gcp-project-id"
+terraform apply -var="project_id=your-gcp-project-id"
 
 # Or deploy directly via ADK CLI to Cloud Run / Vertex AI Agent Engine
 adk deploy cloud_run \
-  --project=l200-agpalumbo-et3xgz \
+  --project=your-gcp-project-id \
   --region=us-central1 \
   --service_name=alottacake-commerce-ops \
   commerce_ops_agent

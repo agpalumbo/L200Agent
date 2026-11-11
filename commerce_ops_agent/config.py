@@ -16,6 +16,10 @@ from typing import Literal
 
 from google.cloud import secretmanager
 
+from .observability.structured_logger import get_structured_logger
+
+logger = get_structured_logger(__name__)
+
 
 def _load_optional_env_file(env_path: Path) -> None:
     """Loads key=value pairs from a local git-ignored file if present."""
@@ -60,9 +64,11 @@ class SecretVaultClient:
                 payload = response.payload.data.decode("utf-8").strip()
                 if payload:
                     return payload
-            except Exception:
-                # Fall back cleanly to environment injection if Secret Manager is unreachable
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "Secret Manager lookup unavailable; falling back to environment variable",
+                    extra={"secret_id": secret_id, "error_type": type(exc).__name__},
+                )
         env_val = os.getenv(secret_id, "").strip()
         if env_val and not env_val.startswith("replace-with-"):
             return env_val
@@ -104,7 +110,7 @@ def get_settings() -> AgentSettings:
     _load_optional_env_file(Path(__file__).resolve().parent / ".env")
     _load_optional_env_file(Path(__file__).resolve().parent.parent / ".env")
 
-    gcp_project_id = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT", "l200-agpalumbo-et3xgz")
+    gcp_project_id = os.getenv("GCP_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT", "your-gcp-project-id")
     use_sm = os.getenv("ENABLE_SECRET_MANAGER", "false").lower() in {"1", "true", "yes"}
     vault = SecretVaultClient(project_id=gcp_project_id, enabled=use_sm)
 
@@ -115,7 +121,7 @@ def get_settings() -> AgentSettings:
         gcp_project_id=gcp_project_id,
         gcp_location=os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"),
         commerce_mode=mode,
-        shopify_shop_domain=os.getenv("SHOPIFY_SHOP_DOMAIN", "m7m2bn-sv.myshopify.com"),
+        shopify_shop_domain=os.getenv("SHOPIFY_SHOP_DOMAIN", "example-store.myshopify.com"),
         shopify_api_version=os.getenv("SHOPIFY_API_VERSION", "2026-07"),
         shopify_checkout_hostname=os.getenv("SHOPIFY_CHECKOUT_HOSTNAME", "checkout.alottacake.com"),
         shopify_client_id=vault.resolve_secret("SHOPIFY_CLIENT_ID"),
@@ -124,7 +130,7 @@ def get_settings() -> AgentSettings:
         cloudflare_storefront_base_url=os.getenv("CLOUDFLARE_STOREFRONT_BASE_URL", "https://alottacake.com").rstrip(
             "/"
         ),
-        cloudflare_zone_id=os.getenv("CLOUDFLARE_ZONE_ID", "098b4805a1195d34a58b8320e76872eb"),
+        cloudflare_zone_id=os.getenv("CLOUDFLARE_ZONE_ID", "00000000000000000000000000000000"),
         cloudflare_api_token=vault.resolve_secret("CLOUDFLARE_API_TOKEN"),
         commerce_hmac_salt=vault.resolve_secret("COMMERCE_HMAC_SALT", default="alottacake-public-safe-fixture-salt-v1"),
         min_contribution_margin_bps=int(os.getenv("MIN_CONTRIBUTION_MARGIN_BPS", "3500")),
